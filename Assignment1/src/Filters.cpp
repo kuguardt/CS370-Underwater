@@ -10,7 +10,7 @@ std::vector<std::vector<float>> GaussianFilter(int N, float signma)
 	float r, s = 2.0f * signma * signma;
 	float sum = 0.0f;
 
-	int symmetry = std::floor((N-1) / 2.0f);
+	int symmetry = (int)std::floor((N-1) / 2.0f);
 	int newN = (symmetry * 2) + 1;
 	//create vector of size N
 	std::vector<std::vector<float>> kernel(newN, std::vector<float>(newN, 0.0f));
@@ -71,7 +71,6 @@ std::vector<std::vector<float>> SobelFilterHorizontal(int N, float scalingFactor
 	//PrintKernel(kernelHorizontal);
 	return kernelHorizontal;
 }
-
 
 std::vector<std::vector<float>> SobelFilterVertical(int N, float scalingFactor)
 {

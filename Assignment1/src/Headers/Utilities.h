@@ -1,5 +1,6 @@
 #pragma once
 #include <math.h>
+#include <algorithm>
 
 struct RGB
 {
@@ -34,6 +35,8 @@ public:
 			return false;
 		if (B != comp.B)
 			return false;
+
+		return true;
 	}
 
 	RGB Red()		{ return RGB(255, 0, 0); }
@@ -42,7 +45,7 @@ public:
 
 	void Print()
 	{
-		std::cout << "(" << R << ",\t" << G << ",\t" << B << ")" << std::endl;
+		std::cout << "(" << R << ",\t" << G << ",\t" << B << ")";
 	}
 };
 
@@ -67,12 +70,59 @@ public:
 	//operator overload
 	bool operator == (const RGBA& comp)
 	{
-		RGB::operator==(comp);
+		if (R != comp.R)
+			return false;
+		if (G != comp.G)
+			return false;
+		if (B != comp.B)
+			return false;
 		if (A != comp.A)
 			return false;
+		return true;
 	}
 
 	RGBA Red() { return RGBA(255, 0, 0); }
 	RGBA Green() { return RGBA(0, 255, 0); }
 	RGBA Blue() { return RGBA(0, 0, 255); }
+};
+
+struct HSV
+{
+	float H, S, V;
+
+	HSV() : H(0.0f), S(0.0f), V(0.0f) {}
+
+	HSV(int hue, int saturation, int value) {
+		//prevent value from going beyond range
+		H = (hue > 179.0f)			? 179.0f : hue;
+		S = (saturation > 255.0f)	? 255.0f : saturation;
+		V = (value > 255.0f)		? 255.0f : value;
+	}
+
+	HSV(const HSV& original)
+	{
+		H = original.H;
+		S = original.S;
+		V = original.V;
+	}
+
+	HSV(HSV& clr) : HSV(clr.H, clr.S, clr.V) {}
+
+	//operator overload
+	bool operator == (const HSV& comp)
+	{
+		if (H != comp.H)
+			return false;
+		if (S != comp.S)
+			return false;
+		if (V != comp.V)
+			return false;
+
+		return true;
+	}
+
+	void Print()
+	{
+		std::cout << "(" << H << ",\t" << S << "%,\t" << V << "%)" << std::endl;
+	}
 };

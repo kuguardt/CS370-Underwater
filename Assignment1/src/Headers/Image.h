@@ -97,7 +97,7 @@ public:
 	{
 		if (!(index < 0 || index >= pixelCount))
 		{
-			return std::round(image[index * 3] + image[(index * 3) + 1] + image[(index * 3) + 2] / 3.0f);
+			return (int)std::round(image[index * 3] + image[(index * 3) + 1] + image[(index * 3) + 2] / 3.0f);
 		}
 	}
 
