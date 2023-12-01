@@ -1,5 +1,6 @@
 #include "Headers/Screen.h"
 #include "Headers/ImageOperations.h"
+#include "Headers/GaussianPyramid.h"
 
 Screen* Screen::s_Instance = nullptr;
 
@@ -21,9 +22,14 @@ void Screen::Init()
 	ass2operations[3] = "Sobel edge detection";
 	ass2operations[4] = "Unsharp-masking";
 
+	pyramidoperations[0] = "Preview Image";
+	pyramidoperations[1] = "Resize Image(Gaussian)";
+	pyramidoperations[2] = "Resize Image(Laplacian)";
+	pyramidoperations[3] = "Test";
+
 	//user input filename
-	file1 = new char[256]{ "images/cameraman.ppm" };
-	file2 = new char[256]{ "images/mandril_gray.ppm"};
+	file1 = new char[256]{ "images/mandril_gray.ppm" };
+	file2 = new char[256]{ "images/cameraman.ppm"};
 	resFile1 = new char[256]{ 0 };
 
 	img1 = ppmLoader::GetInstance()->LoadPPM("res/images/cameraman.ppm");
@@ -48,7 +54,7 @@ void Screen::Init()
 	//test filters
 	//outImage = ApplyFilter(&img1, SobelFilter(5, 1.0f));
 	//outImage = ApplyFilter(&img1, GaussianFilter(3, 1.5f));
-	outImage = UnsharpMasking(&img1, 10.0, 15);
+	//outImage = UnsharpMasking(&img1, 10.0, 15);
 	tex1.Clean();
 	tex1.Init(&outImage);
 	tex1.Bind();
@@ -156,6 +162,156 @@ void Screen::Draw()
 	shader->UnBind();
 }
 
+void Screen::DrawPotae()
+{
+	projection = glm::ortho(0.0f, (float)windowWidth, 0.0f, (float)windowHeight, -1.0f, 1.0f);
+	view = glm::translate(glm::mat4(1.0f), glm::vec3(windowWidth / 2.0f, windowHeight / 2.0, 0));
+	//Update window properties
+	shader->Bind();
+
+	//Update plane transforms
+	plane.SetPosition({ img1_position[0], img1_position[1] });
+	plane.SetScale({ img1_size, img1_size });
+	MVP = projection * view * plane.UpdateModelMatrix();
+
+	shader->SetUniformMat4f("u_MVP", MVP);
+
+	//Draws
+	plane.Draw(*shader);
+
+	if (operateImg)
+	{
+		//if artimetic operation
+		if (currentOperation < 4)
+		{
+			img1 = ppmLoader::GetInstance()->LoadPPM("res/" + std::string(file1));
+			img2 = ppmLoader::GetInstance()->LoadPPM("res/" + std::string(file2));
+			if (img1.totalPixels == 0 || img2.totalPixels == 0)
+				std::cout << "One or both file not found!!" << std::endl;
+			else
+			{
+				std::cout << "Image processed" << std::endl;
+				outImage = ArithmeticOperation(&img1, &img2, currentOperation);
+				hasResult = true;
+			}
+		}
+		else if (currentOperation == 6) //Preview Image
+		{
+			outImage = ppmLoader::GetInstance()->LoadPPM("res/" + std::string(file1));
+			hasResult = true;
+		}
+		else if (currentOperation >= 4) //Image Transform
+		{
+			img1 = ppmLoader::GetInstance()->LoadPPM("res/" + std::string(file1));
+			if (img1.totalPixels == 0)
+				std::cout << "One or both file not found!!" << std::endl;
+			else
+			{
+				std::cout << "Image processed" << std::endl;
+				outImage = ImageTransform(&img1, currentOperation, intensity, gamma);
+				hasResult = true;
+			}
+		}
+
+		operateImg = false;
+	}
+	else if (ass2operateImg)
+	{
+		img1 = ppmLoader::GetInstance()->LoadPPM("res/" + std::string(file1));
+
+		if (ass2currentOperation == 0) //Histogram Eq.
+		{
+			outImage = HistogramEqualization(&img1);
+			hasResult = true;
+		}
+		else if (ass2currentOperation == 1) //Histogram Matching
+		{
+			img2 = ppmLoader::GetInstance()->LoadPPM("res/" + std::string(file2));
+			outImage = HistogramMatching(&img1, &img2);
+			hasResult = true;
+		}
+		else if (ass2currentOperation == 2) //Gaussian smoothing
+		{
+			outImage = ApplyFilter(&img1, GaussianFilter(kernelSize, sigma));
+			hasResult = true;
+		}
+		else if (ass2currentOperation == 3) //Sobel Edge Detection
+		{
+			outImage = ApplySobel(&img1, sigma, kernelSize);
+			hasResult = true;
+		}
+		else if (ass2currentOperation == 4) //Unsharp mask
+		{
+			outImage = UnsharpMasking(&img1, sigma, kernelSize);
+			hasResult = true;
+		}
+	}
+	else if (PyramidImg)
+	{
+		img1 = ppmLoader::GetInstance()->LoadPPM("res/" + std::string(file1));
+
+		if (pyramidcurrentOperation == 0) //Preview
+		{
+			outImage = ppmLoader::GetInstance()->LoadPPM("res/" + std::string(file1));
+			hasResult = true;
+		}
+		if (pyramidcurrentOperation == 1) //Gaussian
+		{
+			outImage = GaussianPyramid(&outImage);
+			hasResult = true;
+		}
+		if (pyramidcurrentOperation == 2) //Lap
+		{
+			outImage = LaplacianPyramid(&outImage);
+			hasResult = true;
+		}
+		if (pyramidcurrentOperation == 3) //Test
+		{
+			outImage = Test(&img1);
+			hasResult = true;
+		}
+
+		/*
+		import matplotlib.pyplot as plt 
+		import numpy as np
+		from scipy.signal import sepfir2d
+		im = plt.imread( 'mandrill.png') # load image
+		h = [1/16,4/16,6/16,4/16,1/16]; # blur filter
+		N = 3 # number of pyramid levels
+		P = []
+		P.append(im) # first pyramid level for k in range (1,N): # build pyramid np.zeros( im.shape)
+		im2 =
+		for z in range(3):
+		im2
+		im2 [:,:,z]==sepfir2d( im[:: 1,z), h, h) # blur each color channel
+		im2 [0:-1:2, 0:-1:2,:] # down-sample
+		im = im2
+		P.append(im2)
+		# display pyramid
+		fig, ax = plt.subplots (nrows=1, ncols=N, figsize=(15, 7), dpi=72, sharex=True, sharey=True)
+		for k in range (N-1,-1,-1):
+		ax[k].imshow(P[k])
+		*/
+
+	}
+
+	if (displayResult)
+	{
+		//display result image
+		hasResult = false;
+		displayResult = false;
+		tex1.Clean();
+		tex1.Init(&outImage);
+		tex1.Bind();
+
+		//output file
+		if (resFile1 != "")
+			ppmLoader::GetInstance()->writePPM(resFile1, &outImage);
+	}
+
+	shader->UnBind();
+}
+
 void Screen::DrawUI()
 {
 	ImGui::Text("Image Transform");
@@ -229,6 +385,18 @@ void Screen::DrawUI()
 		
 		//second operate button
 		ass2operateImg = ImGui::Button("Operate(Assignment2)");
+	}
+
+	if (ImGui::CollapsingHeader("Image Fusion Pyramid")) 
+	{
+		ImGui::Spacing();
+		ImGui::Text("List of avaliable image operations");
+		ImGui::Combo("Pyramid Operation", &pyramidcurrentOperation, pyramidoperations, IM_ARRAYSIZE(pyramidoperations), PYRAMID_OPERATIONS);
+		ImGui::Spacing();
+		ImGui::Text("Import image(s) example: images/<filename>.ppm\nor /results/<filename>.ppm): ");
+		ImGui::InputText("Image #1", file1, 256);
+		//Operate button
+		PyramidImg = ImGui::Button("Operate(Pyramid)");
 	}
 
 	//Display result image
