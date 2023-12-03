@@ -14,7 +14,7 @@
 #define ASS2_OPERATIONS 5
 
 //pyramid operations
-#define PYRAMID_OPERATIONS 4
+#define PYRAMID_OPERATIONS 5
 //window size
 #define WIDTH	1280
 #define HEIGHT	980
@@ -42,7 +42,7 @@ private:
 
 	Image img1;
 	Image img2;
-	//Image img3;
+	Image img3;
 	Image outImage;
 
 	Plane plane;

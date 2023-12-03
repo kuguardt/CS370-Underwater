@@ -53,6 +53,8 @@ Image ArithmeticOperation(const Image* first, const Image* second, int op)
 		operation = &Product;
 	else if (op == 3)
 		operation = &Negative;
+	else if (op == 7)
+		operation = &Negative;
 
 	//Assume that those two image is in the same size
 	int* sizeInfo; //[6]
@@ -101,6 +103,17 @@ Image ArithmeticOperation(const Image* first, const Image* second, int op)
 	//free sizeInfo
 	delete[] sizeInfo;
 	sizeInfo = nullptr;
+
+	return im;
+}
+
+Image ImageAdditionWeight(const Image* img1, float weight1, const Image* img2, float weight2)
+{
+	Image im;
+	im = *img1;
+
+	for (int i = 0; i < img1->totalPixels; i++)
+		im.image[i] = AdditionWithWeight(img1->image[i], weight1, img2->image[i], weight2);
 
 	return im;
 }
@@ -182,6 +195,19 @@ unsigned char Negative(const unsigned char u1, const unsigned char u2)
 {
 	unsigned char res = 0;
 	float tmp = (float)u1 / (float)u2;
+
+	if (tmp > 255)
+		res = 255;
+	else
+		res = (unsigned char)tmp;
+
+	return res;
+}
+
+unsigned char AdditionWithWeight(const unsigned char u1, float weight1, const unsigned char u2, float weight2)
+{
+	unsigned char res = 0;
+	float tmp = (float)u1 * weight1 + (float)u2 * weight2;
 
 	if (tmp > 255)
 		res = 255;

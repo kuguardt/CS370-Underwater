@@ -95,3 +95,11 @@ Image Test(Image* original)
 
 	return result;
 }
+
+Image TestFusion(Image* img1, float weight1, Image* img2, float weight2)
+{
+	Image result;
+	result = ArithmeticOperation(img1, img2, 0);
+
+	return result;
+}

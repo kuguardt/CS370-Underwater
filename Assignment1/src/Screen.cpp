@@ -1,6 +1,7 @@
 #include "Headers/Screen.h"
 #include "Headers/ImageOperations.h"
 #include "Headers/GaussianPyramid.h"
+#include "Headers/WhiteBalance.h"
 
 Screen* Screen::s_Instance = nullptr;
 
@@ -22,17 +23,18 @@ void Screen::Init()
 	ass2operations[3] = "Sobel edge detection";
 	ass2operations[4] = "Unsharp-masking";
 
-	pyramidoperations[0] = "Preview Image";
-	pyramidoperations[1] = "Resize Image(Gaussian)";
-	pyramidoperations[2] = "Resize Image(Laplacian)";
-	pyramidoperations[3] = "Test";
+	pyramidoperations[0] = "Original";
+	pyramidoperations[1] = "WhiteBalance";
+	pyramidoperations[2] = "Upper";
+	pyramidoperations[3] = "Lower";
+	pyramidoperations[4] = "Final";
 
 	//user input filename
-	file1 = new char[256]{ "images/mandril_gray.ppm" };
+	file1 = new char[256]{ "images/underwater2_P3.ppm" };
 	file2 = new char[256]{ "images/cameraman.ppm"};
 	resFile1 = new char[256]{ 0 };
 
-	img1 = ppmLoader::GetInstance()->LoadPPM("res/images/cameraman.ppm");
+	img1 = ppmLoader::GetInstance()->LoadPPM("res/images/underwater2_P3.ppm");
 	tex1.Init(&img1);
 	plane.Init();
 
@@ -51,7 +53,18 @@ void Screen::Init()
 
 	shader->UnBind();
 
+	operateImg = false;
+	ass2operateImg = false;
+
 	//test filters
+	//img2 = *WhiteBalance(&img1);
+	//img3 = ImageTransform(&img2, 5, 2.1, 0.85);
+
+	//img1 = UnsharpMasking(&img2, 20, 5);
+	//img2 = HistogramEqualization(&img1);
+
+	//outImage = ImageAdditionWeight(&img3, 0.7f, &img2, 0.3f);
+
 	//outImage = ApplyFilter(&img1, SobelFilter(5, 1.0f));
 	//outImage = ApplyFilter(&img1, GaussianFilter(3, 1.5f));
 	//outImage = UnsharpMasking(&img1, 10.0, 15);
@@ -144,6 +157,67 @@ void Screen::Draw()
 			hasResult = true;
 		}
 	}
+	else if (PyramidImg)
+	{
+		img1 = ppmLoader::GetInstance()->LoadPPM("res/" + std::string(file1));
+
+		if (pyramidcurrentOperation == 0) //Original
+		{
+			//img1 = ppmLoader::GetInstance()->LoadPPM("res/images/underwater2_P3.ppm");
+			outImage = img1;
+			hasResult = true;
+		}
+		if (pyramidcurrentOperation == 1) //WhiteBalance
+		{
+			outImage = *WhiteBalance(&img1);
+			hasResult = true;
+		}
+		if (pyramidcurrentOperation == 2) //Upper
+		{
+			img2 = *WhiteBalance(&img1);
+
+			outImage = ImageTransform(&img2, 5, 2.1, 0.85);
+
+			hasResult = true;
+		}
+		if (pyramidcurrentOperation == 3) //Lower
+		{
+			img2 = *WhiteBalance(&img1);
+
+			img1 = UnsharpMasking(&img2, 20, 5);
+			outImage = HistogramEqualization(&img1);
+
+			hasResult = true;
+		}
+		if (pyramidcurrentOperation == 4) //Final
+		{
+			img2 = *WhiteBalance(&img1);
+			img3 = ImageTransform(&img2, 5, 2.1, 0.85);
+
+			img1 = UnsharpMasking(&img2, 20, 5);
+			img2 = HistogramEqualization(&img1);
+
+			outImage = ImageAdditionWeight(&img3, 0.7f, &img2, 0.3f);
+			outImage = UnsharpMasking(&outImage, 10, 5);
+			hasResult = true;
+		}
+
+		//if (pyramidcurrentOperation == 1) //Gaussian
+		//{
+		//	outImage = GaussianPyramid(&outImage);
+		//	hasResult = true;
+		//}
+		//if (pyramidcurrentOperation == 2) //Lap
+		//{
+		//	outImage = LaplacianPyramid(&outImage);
+		//	hasResult = true;
+		//}
+		//if (pyramidcurrentOperation == 3) //Test
+		//{
+		//	outImage = Test(&img1);
+		//	hasResult = true;
+		//}
+	}
 
 	if (displayResult)
 	{
@@ -212,6 +286,11 @@ void Screen::DrawPotae()
 				hasResult = true;
 			}
 		}
+		//else if (currentOperation == 7) //Preview Image
+		//{
+		//	outImage = ppmLoader::GetInstance()->LoadPPM("res/" + std::string(file1));
+		//	hasResult = true;
+		//}
 
 		operateImg = false;
 	}
@@ -250,49 +329,61 @@ void Screen::DrawPotae()
 	{
 		img1 = ppmLoader::GetInstance()->LoadPPM("res/" + std::string(file1));
 
-		if (pyramidcurrentOperation == 0) //Preview
+		if (pyramidcurrentOperation == 0) //Original
 		{
+			//img1 = ppmLoader::GetInstance()->LoadPPM("res/images/underwater2_P3.ppm");
 			outImage = ppmLoader::GetInstance()->LoadPPM("res/" + std::string(file1));
 			hasResult = true;
 		}
-		if (pyramidcurrentOperation == 1) //Gaussian
+		if (pyramidcurrentOperation == 1) //WhiteBalance
 		{
-			outImage = GaussianPyramid(&outImage);
+			outImage = *WhiteBalance(&img1);
 			hasResult = true;
 		}
-		if (pyramidcurrentOperation == 2) //Lap
+		if (pyramidcurrentOperation == 2) //Upper
 		{
-			outImage = LaplacianPyramid(&outImage);
+			img2 = *WhiteBalance(&img1);
+
+			outImage = ImageTransform(&img2, 5, 2.1, 0.85);
+
 			hasResult = true;
 		}
-		if (pyramidcurrentOperation == 3) //Test
+		if (pyramidcurrentOperation == 3) //Lower
 		{
-			outImage = Test(&img1);
+			img2 = *WhiteBalance(&img1);
+
+			img1 = UnsharpMasking(&img2, 20, 5);
+			outImage = HistogramEqualization(&img1);
+
+			hasResult = true;
+		}
+		if (pyramidcurrentOperation == 4) //Final
+		{
+			img2 = *WhiteBalance(&img1);
+			img3 = ImageTransform(&img2, 5, 2.1, 0.85);
+
+			img1 = UnsharpMasking(&img2, 20, 5);
+			img2 = HistogramEqualization(&img1);
+
+			outImage = ImageAdditionWeight(&img3, 0.7f, &img2, 0.3f);
 			hasResult = true;
 		}
 
-		/*
-		import matplotlib.pyplot as plt 
-		import numpy as np
-		from scipy.signal import sepfir2d
-		im = plt.imread( 'mandrill.png') # load image
-		h = [1/16,4/16,6/16,4/16,1/16]; # blur filter
-		N = 3 # number of pyramid levels
-		P = []
-		P.append(im) # first pyramid level for k in range (1,N): # build pyramid np.zeros( im.shape)
-		im2 =
-		for z in range(3):
-		im2
-		im2 [:,:,z]==sepfir2d( im[:: 1,z), h, h) # blur each color channel
-		im2 [0:-1:2, 0:-1:2,:] # down-sample
-		im = im2
-		P.append(im2)
-		# display pyramid
-		fig, ax = plt.subplots (nrows=1, ncols=N, figsize=(15, 7), dpi=72, sharex=True, sharey=True)
-		for k in range (N-1,-1,-1):
-		ax[k].imshow(P[k])
-		*/
-
+		//if (pyramidcurrentOperation == 1) //Gaussian
+		//{
+		//	outImage = GaussianPyramid(&outImage);
+		//	hasResult = true;
+		//}
+		//if (pyramidcurrentOperation == 2) //Lap
+		//{
+		//	outImage = LaplacianPyramid(&outImage);
+		//	hasResult = true;
+		//}
+		//if (pyramidcurrentOperation == 3) //Test
+		//{
+		//	outImage = Test(&img1);
+		//	hasResult = true;
+		//}
 	}
 
 	if (displayResult)
